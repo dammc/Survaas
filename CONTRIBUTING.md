@@ -1,6 +1,6 @@
-## Contributing to [Project Name]
+## Contributing to Survaas
 
-Thank you for your interest in contributing to **[Project Name]!** We welcome contributions of all kinds, whether it's fixing bugs, adding features, improving documentation, or helping others.
+Thank you for your interest in contributing to **Survaas!** We welcome contributions of all kinds, whether it's fixing bugs, adding features, improving documentation, or helping others.
 
 ### How to Contribute
 
@@ -10,8 +10,8 @@ Thank you for your interest in contributing to **[Project Name]!** We welcome co
 2. **Clone Your Fork**
    - Use Git to clone your fork to your local machine:
      ```bash
-     git clone https://github.com/[your-username]/[repository-name].git
-     cd [repository-name]
+     git clone https://github.com/dammc/Survaas.git
+     cd Survaas
      ```
 
 3. **Create a New Branch**
@@ -54,7 +54,7 @@ Thank you for your interest in contributing to **[Project Name]!** We welcome co
 
 ### Guidelines for Contributors
 
-- **Be Respectful**: Follow our [Code of Conduct](CODE_OF_CONDUCT.md) and treat others with kindness.
+- **Be Respectful**: Follow our Code of Conduct and treat others with kindness.
 - **Discuss Major Changes**: For significant changes or new features, open an issue to discuss your idea before starting work.
 - **Stay Compatible**: Ensure your changes are compatible with the existing code and don't introduce breaking changes.
 - **Write Tests**: Add or update tests to verify your changes when applicable.
@@ -66,9 +66,9 @@ Thank you for your interest in contributing to **[Project Name]!** We welcome co
 
 If you're unsure about something or need help, don't hesitate to:
 - Open a GitHub issue with your question.
-- Check the [existing issues](https://github.com/[username]/[repository]/issues) for discussions related to your question.
+- Check the [existing issues](https://github.com/[username]/[repository]/issues) (tbd.) for discussions related to your question.
 - Contact the maintainers via GitHub Discussions or the provided communication channels.
 
 ---
 
-We appreciate your time and effort in making **[Project Name]** better. 🎉
+We appreciate your time and effort in making **Survaas** better. 🎉
