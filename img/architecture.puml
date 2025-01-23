@@ -1,0 +1,19 @@
+@startuml
+skinparam monochrome true
+skinparam defaultTextAlignment center
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v18.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/Database/Aurora.puml
+!include AWSPuml/MachineLearning/SageMaker.puml
+!include AWSPuml/Containers/Fargate.puml
+
+actor User
+Fargate(sv, "Survey Application", "Container Platform", "Hosts Survey Application")
+Aurora(db, "Database", "MySQL", "Stores Responses")
+SageMaker(ml, "Data Analytics", "ML and AI Models", "Analyzes Survey Response Data")
+
+User -> sv: accesses via browser
+sv -down-> db: writes
+ml -left-> db: reads
+@enduml
