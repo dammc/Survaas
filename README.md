@@ -19,6 +19,7 @@ and analyze it from a AWS SageMaker domain according to your specific research i
 2. AWS CLI installed on your local machine (see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for instructions)
 3. AWS CDK installed on your local machine (see https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html for instructions)
 4. AWS Account which has been bootstrapped for CDK (see https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html for instructions)
+5. [Docker](https://docs.docker.com/) installed on your local machine
 
 ### Deploy the infrastructure to you AWS Account
 
