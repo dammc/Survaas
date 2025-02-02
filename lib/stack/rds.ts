@@ -15,7 +15,7 @@ interface RdsStackProps extends StackProps {
   /** VPC where RDS cluster will be deployed */
   vpc: ec2.IVpc,
   /** Security group for the RDS cluster */
-  clusterSecurityGroup: ec2.SecurityGroup,
+  dbSecurityGroup: ec2.SecurityGroup,
   /** KMS key for encryption */
   kmsKey: kms.IKey,
 }
@@ -43,16 +43,16 @@ export class RdsStack extends Stack {
      * Creates an Aurora MySQL database cluster with serverless v2 instances
      */
     this.dbCluster = new rds.DatabaseCluster(this, 'SurveyCluster', {
-      engine: rds.DatabaseClusterEngine.auroraMysql({version: rds.AuroraMysqlEngineVersion.VER_3_08_0}),
+      engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_08_0 }),
       vpc: props.vpc,
-      securityGroups: [props.clusterSecurityGroup],
+      securityGroups: [props.dbSecurityGroup],
       credentials: { username: props.appName.toLowerCase() + 'admin' },
       clusterIdentifier: props.appName.toLowerCase() + '-db',
       defaultDatabaseName: props.appName + 'Db',
       deletionProtection: false,
       backup: { retention: Duration.days(7) },
       parameterGroup: new rds.ParameterGroup(this, 'ParameterGroup', {
-        engine: rds.DatabaseClusterEngine.auroraMysql({version: rds.AuroraMysqlEngineVersion.VER_3_08_0}),
+        engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_08_0 }),
       }),
       removalPolicy: RemovalPolicy.DESTROY,
       writer: rds.ClusterInstance.serverlessV2('serverlessWriter', {
@@ -66,7 +66,7 @@ export class RdsStack extends Stack {
       ],
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 2,
-      storageEncrypted:true,
+      storageEncrypted: true,
       storageEncryptionKey: props.kmsKey,
     });
 
@@ -75,7 +75,7 @@ export class RdsStack extends Stack {
      */
     this.ssmDbClusterSecretArn = new ssm.StringParameter(this, 'SsmDbSecretArn', {
       parameterName: props.appName + 'DbSecretArn',
-      stringValue: <string>this.dbCluster.secret?.secretArn,
+      stringValue: <string> this.dbCluster.secret?.secretArn,
     })
   }
 }

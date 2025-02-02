@@ -18,6 +18,8 @@ interface SagemakerStackprops extends StackProps {
     /** ARN of the database cluster */
     dbClusterArn: string,
     /** KMS key for encryption */
+    dbClusterSecretArn: string,
+    /** KMS key for encryption */
     kmsKey: kms.IKey,
 }
 
@@ -82,7 +84,7 @@ export class SagemakerStack extends Stack {
                     'secretsmanager:DescribeSecret',
                     'secretsmanager:GetSecretValue',
                 ],
-                resources: [ssm.StringParameter.valueForStringParameter(this, props.appName + 'DbSecretArn')],
+                resources: [props.dbClusterSecretArn],
             })],
         }));
 
