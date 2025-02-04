@@ -31,7 +31,7 @@ export class SurveyVpcConstruct extends Construct {
                     subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
                     name: 'Private',
                     cidrMask: 18
-                }
+                },
             ],
             natGatewayProvider: ec2.NatProvider.gateway(),
             natGateways: 1,

@@ -3,7 +3,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { aws_kms as kms } from 'aws-cdk-lib'
 import { aws_sagemaker as sm } from 'aws-cdk-lib';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { aws_ec2 as ec2 } from 'aws-cdk-lib';
 /**
  * Interface for SagemakerStack properties extending StackProps
@@ -17,7 +16,7 @@ interface SagemakerStackprops extends StackProps {
     securityGroupIds: string[];
     /** ARN of the database cluster */
     dbClusterArn: string,
-    /** KMS key for encryption */
+    /** Secret ARN for db credentials */
     dbClusterSecretArn: string,
     /** KMS key for encryption */
     kmsKey: kms.IKey,
