@@ -19,21 +19,16 @@ and analyze it from a AWS SageMaker domain according to your specific research i
 2. AWS CLI installed on your local machine (see https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for instructions)
 3. AWS CDK installed on your local machine (see https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html for instructions)
 4. AWS Account which has been bootstrapped for CDK (see https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html for instructions)
-5. [Docker](https://docs.docker.com/) installed on your local machine
+5. [Docker](https://docs.docker.com/) installed and running on your local machine
 
 ### Deploy the infrastructure to you AWS Account
 
-1. In the project folder of your source code go to the "bin" folder and open the "survaas_cdk.ts" file.
-2. Enter your account + region information as shown below.
-3. Customize the appName and survey application credentials if you like (see below).
-
-![Initialization](img/initialize_default_stack.png)
-
-4. Open AWS CLI and authenticate with an administrative user (see https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html for instructions).
-5. Open a command line in the project directory.
-6. Run `npm install` to install the dependencies from the package.json file.
-7. Run `cdk deploy --all` as authenticated admin user to deploy the survaas infrastructure to your AWS account.
-8. In the AWS Management Console go to CloudFormation and verify that all the stacks deployed successfully. 
+1. Open AWS CLI and authenticate with an administrative user (see https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html for instructions).
+2. Open a command line in the project directory.
+3. Run `npm install` to install the dependencies from the package.json file.
+4. Set `CDK_DEFAULT_ACCOUNT` and `CDK_DEFAULT_REGION` as environment variables for the account id and region you wish to deploy to.
+5. Run `cdk deploy --all` as authenticated admin user to deploy the survaas infrastructure to your AWS account.
+6. In the AWS Management Console go to CloudFormation and verify that all the stacks deployed successfully. 
 
 ### Survey environment
 
@@ -70,7 +65,8 @@ That way you can also share the surveys created by yourself.
 #### Prerequisites: 
 
 Since SageMaker in this setup is configured to authenticate with SSO you need an AWS Identity Center user 
-in order to access your SageMaker domain. For further information see: https://docs.aws.amazon.com/singlesignon/latest/userguide/quick-start-default-idc.html.
+in order to access your SageMaker domain. 
+For further information see: https://docs.aws.amazon.com/singlesignon/latest/userguide/quick-start-default-idc.html.
 
 1. In the AWS Management Console go to "Amazon SageMaker AI" and under "Domains" select your survaas domain.
 2. Select the user profiles tab and assign a user to your domain.
@@ -89,15 +85,17 @@ in order to access your SageMaker domain. For further information see: https://d
 6. Open the space (under "Settings" > "Theme" you can switch on the dark mode if you prefer).
 7. Click "Upload files" on the left.
 8. In your local project folder navigate to the sampleData directory and upload all the files stored in the "sagemaker" folder.
-9. Open the "test_rds_connection.ipynb" Jupyter notebook. If you have left the appName of the SurvaasCdkStack as default you can just run the notebook as it is. Otherwise check the rds_instance_identifier, db_name and ssm_param_name at the bootom and change them according to your appName. 
+9. Open the "test_rds_connection.ipynb" Jupyter notebook. If you have left the appName of the SurvaasClusterStack as default you can just run the notebook as it is. 
+Otherwise check the rds_instance_identifier, db_name and ssm_param_name at the bottom and change them according to your appName. 
+How to change the appName and add new SurvaasClusterStacks is explained in the "Developer guide" section below.
 
 ![Overview](img/jupyter_test_rds.png)
 
-10. Open "load_data.ipynb" Jupyter notebook and check the rds_instance_identifier, db_name and ssm_param_name if you changed the appName of the SurvaasCdkStack.
+10. Open "load_data.ipynb" Jupyter notebook and check the rds_instance_identifier, db_name and ssm_param_name if you changed the appName of the SurvaasClusterStack.
 11. Run all cells in order to load some sample data to your RDS database cluster. This sample data mocks a result set of the customer segmentation sample survey mentioned above.
-12. Open "pca_sample.ipynb" Jupyter notebook and check the rds_instance_identifier, db_name and ssm_param_name if you changed the appName of the SurvaasCdkStack.
+12. Open "pca_sample.ipynb" Jupyter notebook and check the rds_instance_identifier, db_name and ssm_param_name if you changed the appName of the SurvaasClusterStack.
 13. Run all cells of the notebook in order to apply a principal component analysis to the sample data set 
-which groups the customer data into different segments.
+which groups the data into different customer types.
 
 ![Overview](img/pca_sample_corrmat.png)
 
@@ -117,7 +115,7 @@ If you prefer the VS Code development experience over JupyterLab you can run you
 
 ### Architecture
 
-The following diagram was automatically created by CdkGraph  on `cdk synth`.
+The following diagram was automatically created by [CdkGraph](https://aws.github.io/aws-pdk/developer_guides/cdk-graph/index.html)  on `cdk synth`.
 
 ![detailed architecture diagram](img/detailed_architecture.png)
 
@@ -147,11 +145,13 @@ You may want to restrict the permissions to meet your specific security policies
 
 #### Networking
 
-For every SurvaasCdkStack a new VPC is created with 2 availability zones with two subnets, a private and a public one, respectively.
+Every SurvaasClusterStack is created in the same SurvaasDefaultVpc with 2 availability zones with two subnets, 
+a private and a public one, respectively.
 Internet access is granted by a NAT gateway placed in a public subnet with a route to an internet gateway.
-There are four security groups: one for the ECS cluster, one for the loadbalancer, one for the RDS cluster 
+For every SurvaasClusterStack there are four security groups: one for the ECS cluster, one for the loadbalancer, one for the RDS cluster 
 and one for the SageMaker domain.
-All of them come with appropriately restricted in- and egress rules.
+All of them come with appropriately restricted in- and egress rules 
+in order to properly isolate them from the resources of other SurvaasClusterStacks.
 
 #### Encryption
 
@@ -165,21 +165,21 @@ The access permissions of the SageMaker domain ExecutionRole are granted via a c
 For a cdk stack overview see index.html in the docs folder.
 You can update the typedoc documentation for your changes with `npx typedoc --plugin typedoc-plugin-missing-exports`.
 
-#### How to add a new SurvaasCdkStack to the app?
+#### How to add a new SurvaasClusterStack to the app?
 
-Since survaas is meant as a platform solution you can add complete and separate survey environments 
+Since Survaas is meant as a platform solution you can add complete and separate survey environments 
 with their own ECR container registry, ECS cluster, RDS cluster and SageMaker domain.
-In order to add a new SurvaasCdkStack go to "bin" > "survaas_cdk.ts" 
-and initialize a new Stack like the commented lines in the picture below show.
-Just fill in a unique appName, your ACCOUNT_ID and REGION.
+In order to add a new SurvaasClusterStack go to "lib" > "root.ts" 
+and initialize a new SurvaasClusterStack like the commented out lines in the picture below show.
+Just fill in a unique appName and initial credentials for your survey database.
 
 ![Adding a new stack](img/add_new_stack.png)
 
-By doing so you deploy a completely new survey environment in a separate VPC,
-with a separate ECR container registry, ECS cluster, RDS database and SageMaker environment
+By doing so you deploy a completely new survey environment in the same SurvaasDefaultVpc
+with different and isolated security groups for the ECS cluster, RDS database and SageMaker environment
 encrypted by two new customer managed KMS keys.
 A worthwhile future consideration might be 
-to do new survey environment creation via AWS [Service Catalog](https://aws.amazon.com/servicecatalog/)
+to do new survey environment creation via AWS [Service Catalog](https://aws.amazon.com/servicecatalog/).
 
 ## Licensing and attribution
 
