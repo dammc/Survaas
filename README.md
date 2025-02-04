@@ -26,7 +26,7 @@ and analyze it from a AWS SageMaker domain according to your specific research i
 1. Open AWS CLI and authenticate with an administrative user (see https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html for instructions).
 2. Open a command line in the project directory.
 3. Run `npm install` to install the dependencies from the package.json file.
-4. Set `CDK_DEFAULT_ACCOUNT` and `CDK_DEFAULT_REGION` as environment variables for the account id and region you wisht to deploy to.
+4. Set `CDK_DEFAULT_ACCOUNT` and `CDK_DEFAULT_REGION` as environment variables for the account id and region you wish to deploy to.
 5. Run `cdk deploy --all` as authenticated admin user to deploy the survaas infrastructure to your AWS account.
 6. In the AWS Management Console go to CloudFormation and verify that all the stacks deployed successfully. 
 
