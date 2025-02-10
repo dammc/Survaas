@@ -64,6 +64,9 @@ export class SurveyEcsStack extends Stack {
 
         this.surveyCluster = new ecs.Cluster(this, 'ECSCluster', {
             vpc: props.vpc,
+            managedStorageConfiguration: {
+                fargateEphemeralStorageKmsKey: props.kmsKey,
+              },
         });
 
         this.surveyTaskDefinition = new ecs.FargateTaskDefinition(this, props.appName + 'TaskDefiniton');
