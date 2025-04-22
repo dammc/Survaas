@@ -244,3 +244,24 @@ If you deploy the architecture to your AWS account you install LimeSurvey to you
 LimeSurvey is open source software under the [GNU General Public License v2](https://www.gnu.de/documents/gpl-2.0.de.html), 
 but comes with restrictions concerning its trademark.
 So, please make sure you comply with the [LimeSurvey License & Trademark Guidelines](https://community.limesurvey.org/licence-trademark/).
+
+## Steps towards Production
+
+The code in this repository only outlines the raw core functionality of the application
+which in the current state is far from production ready. 
+This section just mentions some steps towards production readiness without any aspiration of completeness.
+
+### From HTTP to HTTPS
+
+Since the implementation of in transit encryption via SSL requires a web domain it hasn't been considered for the core functionality.
+In order to secure the communication with your survey environment you can do the following:
+
+1. Create a Hosted Zone in [Route 53](https://aws.amazon.com/route53/) for your domain.
+2. Request a public SSL/TLS certificate in [AWS Certificate Manager](https://aws.amazon.com/certificate-manager/).
+3. Add the certificate to your load balancer and define appropriate listener rules as, for example, described in [this guide](https://exanubes.com/blog/adding-ssl-certificate-to-fargate-app).
+
+### Firewall
+
+As your load balancer directly faces the internet you might want to add a firewall as a security layer in front of it in order to control the traffic.
+You can do so by using the [AWS WAF](https://docs.aws.amazon.com/waf/latest/developerguide/what-is-aws-waf.html) service.
+[This guide](https://jadhavrohit.medium.com/integrating-aws-waf-with-aws-application-load-balancer-69377f946743) may serve you well as a starting point for this purpose. 
