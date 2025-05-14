@@ -181,6 +181,77 @@ encrypted by two new customer managed KMS keys.
 A worthwhile future consideration might be 
 to do new survey environment creation via AWS [Service Catalog](https://aws.amazon.com/servicecatalog/).
 
+## Testing with Jest and aws-cdk-lib/assertions
+
+This project uses Jest for testing and the `aws-cdk-lib/assertions` library to validate the CDK infrastructure. The tests verify that the infrastructure is correctly configured according to best practices and requirements.
+
+### Running Tests
+
+To run the tests, use the following command:
+
+```bash
+npm test
+```
+
+### Test Structure
+
+The tests are organized by component:
+
+1. **Main Stack Tests** (`surveyaas_cdk.test.ts` and `root.test.ts`):
+   - Tests the overall SurvaasRootStack and its components
+   - Verifies that all required resources are created
+   - Checks that resources are properly connected
+
+2. **VPC Tests** (`vpc.test.ts`):
+   - Tests the VPC configuration
+   - Verifies subnets, NAT gateway, and routing
+
+3. **Security Group Tests** (`security-groups.test.ts`):
+   - Tests security group configurations
+   - Verifies proper ingress/egress rules
+
+4. **RDS Tests** (`rds.test.ts`):
+   - Tests the RDS Aurora cluster configuration
+   - Verifies encryption, instances, and subnet groups
+
+5. **ECS Tests** (`ecs.test.ts`):
+   - Tests the ECS service configuration
+   - Verifies task definitions, load balancer, and networking
+
+6. **KMS Tests** (`kms.test.ts`):
+   - Tests KMS key configurations
+   - Verifies key policies and permissions
+
+7. **SageMaker Tests** (`sagemaker.test.ts`):
+   - Tests SageMaker domain and user profile configuration
+   - Verifies IAM roles and permissions
+
+8. **ECR Tests** (`ecr.test.ts`):
+   - Tests Docker image asset creation
+   - Verifies ECR repository configuration
+
+9. **App Cluster Tests** (`app-cluster.test.ts`):
+   - Tests the main application cluster stack
+   - Verifies all components are properly integrated
+
+### Testing Approach
+
+The tests use the `aws-cdk-lib/assertions` library to:
+
+1. Verify resource counts (`template.resourceCountIs`)
+2. Check resource properties (`template.hasResourceProperties`)
+3. Find specific resources (`template.findResources`)
+4. Use matchers for flexible assertions (`Match.anyValue()`, `Match.objectLike()`, etc.)
+
+### Adding New Tests
+
+When adding new infrastructure components, follow these steps to add tests:
+
+1. Create a new test file for the component
+2. Set up the necessary constructs in the `beforeEach` block
+3. Write tests that verify resource creation and configuration
+4. Run the tests to ensure they pass
+
 ## Licensing and attribution
 
 ### Licensing
