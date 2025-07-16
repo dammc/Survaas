@@ -27,7 +27,7 @@ import { CdkGraphDiagramPlugin } from '@aws/pdk/cdk-graph-plugin-diagram'
    * @param {string} id - Stack identifier
    * @param {object} props - Stack properties including the app environment
    */
-  new SurvaasRootStack(app, 'SurvaasRootStack', {
+  new SurvaasRootStack(app, 'SurvaasDefaultRootStack', {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
       region: process.env.CDK_DEFAULT_REGION

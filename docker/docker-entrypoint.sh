@@ -704,9 +704,9 @@ file_env() {
 }
 
 if [[ "$1" == apache2* ]] || [ "$1" == php-fpm ]; then
-    file_env 'LIMESURVEY_DB_TYPE' 'mysql'
-    file_env 'LIMESURVEY_DB_HOST' 'mysql'
-    file_env 'LIMESURVEY_DB_PORT' '3306'
+    file_env 'LIMESURVEY_DB_TYPE' 'pgsql'
+    file_env 'LIMESURVEY_DB_HOST' 'pgsql'
+    file_env 'LIMESURVEY_DB_PORT' '5432'
     file_env 'LIMESURVEY_TABLE_PREFIX' ''
     file_env 'LIMESURVEY_ADMIN_NAME' 'Lime Administrator'
     file_env 'LIMESURVEY_ADMIN_EMAIL' 'lime@lime.lime'
