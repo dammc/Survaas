@@ -21,7 +21,7 @@ interface RdsStackProps extends StackProps {
 }
 
 /**
- * Stack that creates an Aurora MySQL RDS cluster
+ * Stack that creates an Aurora PostgreSQL RDS cluster
  * @extends {Stack}
  */
 export class RdsStack extends Stack {
@@ -43,7 +43,7 @@ export class RdsStack extends Stack {
      * Creates an Aurora MySQL database cluster with serverless v2 instances
      */
     this.dbCluster = new rds.DatabaseCluster(this, 'SurveyCluster', {
-      engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_08_0 }),
+      engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_16_4 }),
       vpc: props.vpc,
       securityGroups: [props.dbSecurityGroup],
       credentials: { username: props.appName.toLowerCase() + 'admin' },
@@ -52,7 +52,7 @@ export class RdsStack extends Stack {
       deletionProtection: false,
       backup: { retention: Duration.days(7) },
       parameterGroup: new rds.ParameterGroup(this, 'ParameterGroup', {
-        engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_08_0 }),
+         engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_16_4 }),
       }),
       removalPolicy: RemovalPolicy.DESTROY,
       writer: rds.ClusterInstance.serverlessV2('serverlessWriter', {

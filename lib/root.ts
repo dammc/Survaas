@@ -24,9 +24,9 @@ export class SurvaasRootStack extends cdk.Stack {
     this.surveyVpcConstruct = new SurveyVpcConstruct(this, 'SurvaasDefaultVpc');
 
     new SurvaasClusterStack(this, 'SurvaasDefaultClusterStack', {
-      appName: 'SurvaasDefault', //replace with a unique app name
-      surveyAdminName: 'admin', // replace with your db user
-      surveyAdminPassword: 'password', // // replace with your db password
+      appName: 'SurvaasDefaultTest', //replace with a unique app name
+      surveyAdminName: 'admin', // replace with your survey admin user name
+      surveyAdminPassword: 'password', // replace with your initial survey admin password
       surveyVpcConstruct: this.surveyVpcConstruct,
       env: { account: this.account, region: this.region },
     });
@@ -35,8 +35,8 @@ export class SurvaasRootStack extends cdk.Stack {
     /*
     new SurvaasClusterStack(this, 'SurvaasCustomClusterStack', { // stack ID has to be unique
       appName: 'SurvaasCustom', //replace with a unique app name
-      surveyAdminName: 'admin', // replace with your db user
-      surveyAdminPassword: 'password', // // replace with your db password
+      surveyAdminName: 'admin', // replace with your initial survey admin password
+      surveyAdminPassword: 'password', // replace with your initial survey admin password
       surveyVpcConstruct: this.surveyVpcConstruct,
       env: { account: this.account, region: this.region },
     });
