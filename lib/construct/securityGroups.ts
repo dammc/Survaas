@@ -57,13 +57,13 @@ export class SecurityGroupsConstruct extends Construct {
         // add ingress from service security group to db security group
         this.dbSecurityGroup.addIngressRule(
             ec2.Peer.securityGroupId(this.serviceSecurityGroup.securityGroupId),
-            ec2.Port.MYSQL_AURORA,
+            ec2.Port.POSTGRES,
         );
 
         // add ingress from analytics security group to db security group
         this.dbSecurityGroup.addIngressRule(
             ec2.Peer.securityGroupId(this.analyticsSecurityGroup.securityGroupId),
-            ec2.Port.MYSQL_AURORA,
+            ec2.Port.POSTGRES,
         );
 
         // add ingress from loadbalancer security group to service security group
