@@ -47,14 +47,25 @@ export class SagemakerStack extends Stack {
         this.sagemakerDomainExecutionRole = new iam.Role(this, this.sagemakerDomainName + 'ExecutionRole', {
             assumedBy: new iam.ServicePrincipal('sagemaker.amazonaws.com'),
             roleName: this.sagemakerDomainName + 'ExecutionRole',
-            managedPolicies: [
-                iam.ManagedPolicy.fromManagedPolicyArn(
-                    this,
-                    'SagemakerFullAccess',
-                    'arn:aws:iam::aws:policy/AmazonSageMakerFullAccess',
-                ),
-            ],
+            managedPolicies: [],
         });
+
+        this.sagemakerDomainExecutionRole.attachInlinePolicy(new iam.Policy(this, 'SagemakerCorePolicy', {
+            statements: [new iam.PolicyStatement({
+                actions: [
+                    'sagemaker:CreatePresignedDomainUrl',
+                    'sagemaker:DescribeDomain',
+                    'sagemaker:DescribeUserProfile',
+                    'sagemaker:ListDomains',
+                    'sagemaker:ListUserProfiles',
+                    'sagemaker:CreateApp',
+                    'sagemaker:DeleteApp',
+                    'sagemaker:DescribeApp',
+                    'sagemaker:ListApps',
+                ],
+                resources: ['*'],
+            })],
+        }));
         props.kmsKey.grant(this.sagemakerDomainExecutionRole, ...[
             'kms:Decrypt',
             'kms:Encrypt',
@@ -74,7 +85,8 @@ export class SagemakerStack extends Stack {
                 actions: [
                     'ssm:GetParameter',
                 ],
-                resources: ['arn:aws:ssm:eu-central-1:' + this.account + ':parameter/' + props.appName + 'DbSecretArn'],
+                resources: ['arn:aws:ssm:' + this.region + ':' + this.account + ':parameter/' 
+                    + props.appName + 'DbSecretArn'],
             })],
         }));
         this.sagemakerDomainExecutionRole.attachInlinePolicy(new iam.Policy(this, 'sagemakerSecretsManagerPolicy', {
