@@ -22,7 +22,7 @@ Everything after the separating slash is considered the 'resourceName',
 even if it contains colons,
 like in 'arn:aws:cognito-sync:region:account:identitypool/us-east-1:1a1a1a1a-ffff-1111-9999-12345678:bla'.</p>
 </div><div class="tsd-comment tsd-typography"></div><aside class="tsd-sources"><ul><li>Defined in node_modules/aws-cdk-lib/core/lib/arn.d.ts:32</li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-external"><a id="slash_resource_slash_resource_name" class="tsd-anchor"></a><h3 class="tsd-anchor-link"><span>SLASH_<wbr/>RESOURCE_<wbr/>SLASH_<wbr/>RESOURCE_<wbr/>NAME</span><a href="#slash_resource_slash_resource_name" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-enum-member">SLASH_RESOURCE_SLASH_RESOURCE_NAME</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">&quot;arn:aws:service:region:account:/resource/resourceName&quot;</span></div><div class="tsd-comment tsd-typography"><p>This represents a format where the 'resource' and 'resourceName'
-parts are seperated with a slash,
+parts are separated with a slash,
 but there is also an additional slash after the colon separating 'account' from 'resource'.
 Like in: 'arn:aws:service:region:account:/resource/resourceName'.
 Note that the leading slash is <em>not</em> included in the parsed 'resource' part.</p>
