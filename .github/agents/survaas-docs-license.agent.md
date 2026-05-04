@@ -4,10 +4,9 @@ description: "Documentation and licensing agent for Survaas README/docs accuracy
 argument-hint: "Provide changed scope, intended docs updates, and compliance concerns."
 target: vscode
 tools:
-  - editFiles
+  - edit/editFiles
   - search
-  - usages
-  - runCommands
+  - search/usages
 agents: []
 ---
 

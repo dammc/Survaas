@@ -5,8 +5,8 @@ argument-hint: "Ask about architecture, design tradeoffs, testing, docs, or oper
 target: vscode
 tools:
   - search
-  - usages
-  - fetch
+  - search/usages
+  - web/fetch
 agents: []
 disable-model-invocation: true
 ---

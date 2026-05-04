@@ -5,8 +5,7 @@ argument-hint: "Provide review scope and whether findings-only or fixes are requ
 target: vscode
 tools:
   - search
-  - usages
-  - runCommands
+  - search/usages
 agents: []
 handoffs:
   - label: Apply Security Fixes
