@@ -4,10 +4,10 @@ description: "Controlled implementation agent for Survaas CDK and repository upd
 argument-hint: "Provide approved plan, scope, constraints, and acceptance criteria."
 target: vscode
 tools:
-  - editFiles
-  - runCommands
+  - edit/editFiles
   - search
-  - usages
+  - search/usages
+  - agent
 agents:
   - survaas-explore
 handoffs:

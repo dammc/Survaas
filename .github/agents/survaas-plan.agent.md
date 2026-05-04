@@ -6,7 +6,7 @@ target: vscode
 tools:
   - agent
   - search
-  - usages
+  - search/usages
 agents:
   - survaas-explore
 handoffs:

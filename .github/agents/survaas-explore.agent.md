@@ -5,7 +5,7 @@ argument-hint: "State what to find and required depth: quick, medium, or thoroug
 target: vscode
 tools:
   - search
-  - usages
+  - search/usages
 agents: []
 user-invocable: false
 ---

@@ -82,7 +82,6 @@ Agents working under `lib/`, `bin/`, and `test/` must enforce:
 
 ## Customization Source of Truth
 - Keep always-on, instruction, prompt, custom-agent, and skill files under `.github/` for VS Code Copilot discovery.
-- Use `.agents/` as optional reference material only; avoid maintaining duplicate authoritative rules in both locations.
 
 ## Licensing and Trademark Expectations
 - Preserve GPL notices, attribution text, and LimeSurvey trademark-compliance guidance.
@@ -102,4 +101,3 @@ Ask for human review before proceeding when changes include:
 - Default admin credentials and examples in `lib/root.ts`.
 - HTTP-only ALB posture in `lib/stack/ecs.ts`.
 - RDS `deletionProtection: false` and `RemovalPolicy.DESTROY` in `lib/stack/rds.ts`.
-- Production hardening backlog tracked in `.agents/backlog.md`.

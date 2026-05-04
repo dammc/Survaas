@@ -4,10 +4,10 @@ description: "Test-focused agent for Survaas Jest and aws-cdk-lib/assertions cov
 argument-hint: "Provide changed scope and expected infra behavior to validate."
 target: vscode
 tools:
-  - editFiles
-  - runCommands
+  - edit/editFiles
   - search
-  - usages
+  - search/usages
+  - agent
 agents:
   - survaas-explore
 handoffs:

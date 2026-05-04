@@ -24,8 +24,7 @@ Evaluate Survaas work against the AWS Well-Architected Framework and prioritize 
    - Cost Optimization
    - Sustainability
 3. Record strengths, risks, and specific remediation actions.
-4. Map findings to code/tests/docs and, when relevant, `.agents/backlog.md`.
-5. Provide phased next actions (now/next/later).
+4. Provide phased next actions (now/next/later).
 
 ## Guardrails
 - Use the AWS Well-Architected framework as authority.
