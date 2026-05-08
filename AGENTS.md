@@ -35,6 +35,8 @@ Agents may run local, non-destructive commands such as:
 - `npx cdk synth`
 - `npx typedoc --plugin typedoc-plugin-missing-exports`
 
+Terminal tool usage is enforced through a workspace `PreToolUse` hook policy in `.github/hooks/terminal-command-approval.json`.
+
 Agents must prefer read-only inspection commands when possible and avoid network/cloud mutation commands.
 
 ## Forbidden Actions
