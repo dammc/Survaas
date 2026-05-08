@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "node .github/hooks/pretooluse-terminal-guard.mjs",
+        "timeout": 10
+      }
+    ]
+  }
+}
