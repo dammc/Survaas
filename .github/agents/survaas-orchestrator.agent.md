@@ -6,8 +6,11 @@ target: vscode
 tools:
   - agent
   - search
-  - usages
-  - runCommands
+  - search/usages
+  - execute/getTerminalOutput
+  - execute/runInTerminal
+  - read/terminalLastCommand
+  - read/terminalSelection
 agents:
   - survaas-explore
   - survaas-plan
