@@ -1,23 +1,19 @@
+jest.mock('aws-cdk-lib/aws-ecr-assets', () => ({
+  DockerImageAsset: jest.fn().mockImplementation(() => ({
+    repository: { repositoryUri: 'mock-uri' },
+    imageUri: 'mock-uri:latest',
+    assetHash: 'mock-hash',
+  })),
+}));
+
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
 import { SurveyImageStack } from '../lib/stack/ecr';
-import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets';
 
 describe('SurveyImageStack', () => {
   let app: cdk.App;
   let stack: SurveyImageStack;
-  let template: Template;
 
   beforeEach(() => {
-    // Mock the DockerImageAsset to avoid Dockerfile lookup
-    jest.spyOn(ecr_assets, 'DockerImageAsset').mockImplementation((scope, id) => {
-      return {
-        repository: { repositoryUri: 'mock-uri' },
-        imageUri: 'mock-uri:latest',
-        assetHash: 'mock-hash',
-      } as any;
-    });
-    
     app = new cdk.App();
     stack = new SurveyImageStack(app, 'TestImageStack', {
       env: { 
@@ -25,8 +21,6 @@ describe('SurveyImageStack', () => {
         region: 'us-east-1' 
       }
     });
-    
-    template = Template.fromStack(stack);
   });
 
   test('Docker image asset is created', () => {
