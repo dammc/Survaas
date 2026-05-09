@@ -6,6 +6,10 @@ target: vscode
 tools:
   - search
   - search/usages
+  - execute/getTerminalOutput
+  - execute/runInTerminal
+  - read/terminalLastCommand
+  - read/terminalSelection
 agents: []
 handoffs:
   - label: Apply Security Fixes

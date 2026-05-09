@@ -17,10 +17,6 @@ import { SurveyVpcConstruct } from '../construct/vpc';
 interface SurvaasClusterStackProps extends cdk.StackProps {
   /** Name of the application */
   appName: string,
-  /** Admin username for the survey application */
-  surveyAdminName: string,
-  /** Admin password for the survey application */
-  surveyAdminPassword: string,
   /** VPC where application resources will be deployed */
   surveyVpcConstruct: SurveyVpcConstruct,
 }
@@ -41,6 +37,8 @@ export class SurvaasClusterStack extends cdk.Stack {
   public readonly surveyImageStack: SurveyImageStack;
   /** Stack containing ECS resources */
   public readonly surveyEcsStack: SurveyEcsStack;
+  /** Secret containing the survey admin credentials */
+  public readonly surveyAdminSecret: smr.Secret;
   /** Security groups for the application */
   public readonly securityGroups: SecurityGroupsConstruct; 
 
@@ -90,10 +88,17 @@ export class SurvaasClusterStack extends cdk.Stack {
 
     this.surveyImageStack = new SurveyImageStack(this, 'SurveyImageStack', {});
 
+    this.surveyAdminSecret = new smr.Secret(this, 'SurveyAdminSecret', {
+      description: `Admin credentials for ${props.appName}`,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ adminUsername: 'admin' }),
+        generateStringKey: 'adminPassword',
+      },
+    });
+
     this.surveyEcsStack = new SurveyEcsStack(this, props.appName + 'EcsStack', {
       appName: props.appName,
-      surveyAdminName: props.surveyAdminName,
-      surveyAdminPassword: props.surveyAdminPassword,
+      surveyAdminSecret: this.surveyAdminSecret,
       imageAsset: this.surveyImageStack.surveyImage,
       vpc: props.surveyVpcConstruct.vpc,
       kmsKey: this.encryptionStack.surveyKmsKey,

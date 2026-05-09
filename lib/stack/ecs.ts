@@ -15,10 +15,8 @@ import { Construct } from 'constructs';
 interface SurveyEcsStackProps extends StackProps {
     /** Name of the application */
     appName: string,
-    /** Admin username for the survey application */
-    surveyAdminName: string,
-    /** Admin password for the survey application */
-    surveyAdminPassword: string,
+    /** Secret containing survey admin credentials */
+    surveyAdminSecret: smr.ISecret,
     /** Docker image asset for the container */
     imageAsset: ecr_assets.DockerImageAsset,
     /** VPC where resources will be deployed */
@@ -87,11 +85,11 @@ export class SurveyEcsStack extends Stack {
         this.surveyContainerDefinition = this.surveyTaskDefinition.addContainer(props.appName + 'Container', {
             image: this.surveyContainer,
             environment: {
-                'LIMESURVEY_ADMIN_USER': props.surveyAdminName,
+                'LIMESURVEY_ADMIN_USER': 'admin',
                 'LIMESURVEY_TABLE_PREFIX': 'survaas_',
-                'LIMESURVEY_ADMIN_PASSWORD': props.surveyAdminPassword,
             },
             secrets: {
+                'LIMESURVEY_ADMIN_PASSWORD': ecs.Secret.fromSecretsManager(props.surveyAdminSecret, 'adminPassword'),
                 'LIMESURVEY_DB': ecs.Secret.fromSecretsManager(props.dbSecret),
                 'LIMESURVEY_DB_HOST': ecs.Secret.fromSecretsManager(
                     smr.Secret.fromSecretCompleteArn(this, props.appName + 'DbHost', props.dbSecret.secretArn + ':host::')),
