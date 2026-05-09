@@ -8,6 +8,10 @@ tools:
   - search
   - search/usages
   - agent
+  - execute/getTerminalOutput
+  - execute/runInTerminal
+  - read/terminalLastCommand
+  - read/terminalSelection
 agents:
   - survaas-explore
 handoffs:
