@@ -792,8 +792,9 @@ COPY survey_template/files /var/www/html/themes/survey/fruity_twentythree/files
 COPY survey_template/layout_survey_list.twig /var/www/html/themes/survey/fruity_twentythree/views/layout_survey_list.twig
 
 COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
 
 # ENTRYPOINT resets CMD
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
