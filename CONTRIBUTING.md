@@ -30,6 +30,32 @@ Thank you for your interest in contributing to **Survaas!** We welcome contribut
 5. **Test Your Changes**
    - Ensure your changes work as expected. Add or update tests if applicable.
 
+### Local pre-commit quality gates
+
+This repository uses Git hooks to block common issues before commits and pushes.
+
+1. Install Python `pre-commit` and project dependencies:
+   ```bash
+   python3 -m pip install --user pre-commit
+   npm install
+   ```
+   If `pip` is not available in your environment, install `pre-commit` from your OS package manager (for example `sudo apt install pre-commit`).
+2. Install hooks:
+   ```bash
+   pre-commit install
+   pre-commit install --hook-type pre-push
+   ```
+3. Run all hooks manually:
+   ```bash
+   pre-commit run --all-files
+   ```
+
+The pre-commit hooks include credential checks, TypeScript ESLint checks, Python Ruff and Black checks, and file hygiene checks (merge markers, malformed JSON/YAML/TOML, large files).
+The pre-push hooks run TypeScript typecheck and Jest tests.
+
+If a hook fails unexpectedly, fix the underlying issue and re-run `pre-commit run --all-files`.
+Use temporary hook bypasses only for emergencies and follow up with a corrective commit.
+
 6. **Commit Your Changes**
    - Write clear and concise commit messages:
      ```bash
