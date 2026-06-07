@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template, Match } from 'aws-cdk-lib/assertions';
+import { Template } from 'aws-cdk-lib/assertions';
 import { RdsStack } from '../lib/stack/rds';
 import { SurveyVpcConstruct } from '../lib/construct/vpc';
 import { SecurityGroupsConstruct } from '../lib/construct/securityGroups';
@@ -50,7 +50,7 @@ describe('RdsStack', () => {
     
     // Verify RDS Cluster has encryption enabled
     template.hasResourceProperties('AWS::RDS::DBCluster', {
-      Engine: 'aurora-mysql',
+      Engine: 'aurora-postgresql',
       StorageEncrypted: true,
     });
   });
@@ -61,7 +61,7 @@ describe('RdsStack', () => {
     
     // Verify RDS Instances have proper configuration
     template.hasResourceProperties('AWS::RDS::DBInstance', {
-      Engine: 'aurora-mysql',
+      Engine: 'aurora-postgresql',
       PubliclyAccessible: false,
     });
   });
