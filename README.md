@@ -164,6 +164,28 @@ The access permissions of the SageMaker domain ExecutionRole are granted via a c
 
 ### Developer guide
 
+#### Local quality gates (pre-commit)
+
+Install and enable local hooks:
+
+```bash
+python3 -m pip install --user pre-commit
+npm install
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+If `pip` is unavailable in your environment, install `pre-commit` with your OS package manager (for example `sudo apt install pre-commit`).
+
+Run all hooks manually:
+
+```bash
+pre-commit run --all-files
+```
+
+Pre-commit hooks validate credentials/secrets patterns, TypeScript linting, Python Ruff and Black linting, and common file hygiene checks.
+Pre-push hooks run TypeScript typecheck and Jest tests.
+
 #### Documentation
 
 For a cdk stack overview see index.html in the docs folder.

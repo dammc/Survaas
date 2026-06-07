@@ -1,0 +1,60 @@
+default_stages: [pre-commit]
+minimum_pre_commit_version: "3.6.0"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: check-json
+      - id: check-yaml
+      - id: check-toml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff
+        args: ["--force-exclude"]
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args: ["--check", "--diff"]
+
+  - repo: local
+    hooks:
+      - id: eslint-ts-staged
+        name: eslint-ts-staged
+        entry: npx eslint --max-warnings=0
+        language: system
+        pass_filenames: true
+        files: ^(bin|lib|test)/.*\.ts$
+        exclude: \.d\.ts$
+
+      - id: iac-policy-check
+        name: iac-policy-check
+        entry: bash scripts/precommit/policy-check.sh
+        language: system
+        pass_filenames: true
+        files: ^(bin|lib)/.*\.ts$
+        exclude: \.d\.ts$
+
+      - id: typecheck-pre-push
+        name: typecheck-pre-push
+        entry: npm run typecheck
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: test-pre-push
+        name: test-pre-push
+        entry: npm test -- --bail --runInBand
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

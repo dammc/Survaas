@@ -25,12 +25,12 @@ export class SurveyImageStack extends cdk.Stack {
         directory: path.join(__dirname, '../../docker'),
         file: 'Docker.survey',
       });
-    } catch (error) {
+    } catch {
       // For testing purposes, provide a mock image if the Docker file is not found
       console.warn('Docker file not found, using mock image for testing');
       this.surveyImage = {
         imageUri: 'mock-uri:latest',
-      } as any;
+      } as unknown as ecr_assets.DockerImageAsset;
     }
   }
 }
