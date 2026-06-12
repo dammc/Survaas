@@ -6,6 +6,7 @@ import { SecurityGroupsConstruct } from '../lib/construct/securityGroups';
 import { EncryptionStack } from '../lib/stack/kms';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets';
 
 describe('SurveyEcsStack', () => {
   let app: cdk.App;
@@ -20,7 +21,7 @@ describe('SurveyEcsStack', () => {
           imageName: 'mock-uri:latest',
           containerDefinitionOptions: {},
         }),
-      } as any;
+      } as unknown as ecs.ContainerImage;
     });
     
     app = new cdk.App();
@@ -56,7 +57,7 @@ describe('SurveyEcsStack', () => {
     });
     
     // Create a mock image asset
-    const mockImageAsset = { imageUri: 'mock-uri:latest' } as any;
+    const mockImageAsset = { imageUri: 'mock-uri:latest' } as unknown as ecr_assets.DockerImageAsset;
     
     // Create ECS stack
     stack = new SurveyEcsStack(app, 'TestEcsStack', {

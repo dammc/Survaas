@@ -17,7 +17,7 @@ describe('SurvaasClusterStack', () => {
           imageName: 'mock-uri:latest',
           containerDefinitionOptions: {},
         }),
-      } as any;
+      } as unknown as ecs.ContainerImage;
     });
     
     app = new cdk.App();

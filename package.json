@@ -8,6 +8,10 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
+    "lint:ts": "eslint \"bin/**/*.ts\" \"lib/**/*.ts\" \"test/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "precommit:policy": "bash scripts/precommit/policy-check.sh",
+    "precommit:all": "uv run pre-commit run --all-files",
     "cdk": "cdk"
   },
   "devDependencies": {

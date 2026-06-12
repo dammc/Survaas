@@ -164,6 +164,28 @@ The access permissions of the SageMaker domain ExecutionRole are granted via a c
 
 ### Developer guide
 
+#### Local quality gates (pre-commit)
+
+Install and enable local hooks:
+
+```bash
+uv sync --group dev
+npm install
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
+```
+
+This project uses a local `.venv` managed by `uv` for Python tooling, including `pre-commit`.
+
+Run all hooks manually:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+Pre-commit hooks validate credentials/secrets patterns, TypeScript linting, Python Ruff and Black linting, and common file hygiene checks.
+Pre-push hooks run TypeScript typecheck and Jest tests.
+
 #### Documentation
 
 For a cdk stack overview see index.html in the docs folder.
