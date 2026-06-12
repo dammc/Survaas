@@ -36,24 +36,24 @@ This repository uses Git hooks to block common issues before commits and pushes.
 
 1. Install Python `pre-commit` and project dependencies:
    ```bash
-   python3 -m pip install --user pre-commit
+   uv sync --group dev
    npm install
    ```
-   If `pip` is not available in your environment, install `pre-commit` from your OS package manager (for example `sudo apt install pre-commit`).
+   This project uses a local `.venv` managed by `uv` for Python tooling.
 2. Install hooks:
    ```bash
-   pre-commit install
-   pre-commit install --hook-type pre-push
+   uv run pre-commit install
+   uv run pre-commit install --hook-type pre-push
    ```
 3. Run all hooks manually:
    ```bash
-   pre-commit run --all-files
+   uv run pre-commit run --all-files
    ```
 
 The pre-commit hooks include credential checks, TypeScript ESLint checks, Python Ruff and Black checks, and file hygiene checks (merge markers, malformed JSON/YAML/TOML, large files).
 The pre-push hooks run TypeScript typecheck and Jest tests.
 
-If a hook fails unexpectedly, fix the underlying issue and re-run `pre-commit run --all-files`.
+If a hook fails unexpectedly, fix the underlying issue and re-run `uv run pre-commit run --all-files`.
 Use temporary hook bypasses only for emergencies and follow up with a corrective commit.
 
 6. **Commit Your Changes**
