@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Template } from 'aws-cdk-lib/assertions';
+import { beforeEach, describe, expect, test } from '@jest/globals';
 import { SecurityGroupsConstruct } from '../lib/construct/securityGroups';
 import { SurveyVpcConstruct } from '../lib/construct/vpc';
 
@@ -24,5 +26,26 @@ describe('SecurityGroupsConstruct', () => {
   test('All required security groups are created', () => {
     // Verify all security groups are created
     template.resourceCountIs('AWS::EC2::SecurityGroup', 4); // DB, LB, Service, Analytics
+  });
+
+  test('A provided shared load balancer security group is reused', () => {
+    const sharedApp = new cdk.App();
+    const sharedStack = new cdk.Stack(sharedApp, 'SharedLbStack');
+    const sharedVpc = new SurveyVpcConstruct(sharedStack, 'SharedVpc').vpc;
+    const sharedLoadBalancerSecurityGroup = new ec2.SecurityGroup(sharedStack, 'SharedLoadBalancerSecurityGroup', {
+      vpc: sharedVpc,
+    });
+
+    const securityGroups = new SecurityGroupsConstruct(
+      sharedStack,
+      'SharedTestSecurityGroups',
+      sharedVpc,
+      sharedLoadBalancerSecurityGroup,
+    );
+
+    expect(securityGroups.loadBalancerSecurityGroup).toBe(sharedLoadBalancerSecurityGroup);
+
+    const sharedTemplate = Template.fromStack(sharedStack);
+    sharedTemplate.resourceCountIs('AWS::EC2::SecurityGroup', 4); // Shared LB + DB + Service + Analytics
   });
 });
