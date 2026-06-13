@@ -21,6 +21,10 @@ After relevant changes, run:
 - `npx cdk synth` (only when local synth is safe/available)
 - `npx typedoc --plugin typedoc-plugin-missing-exports` (for doc-sensitive updates)
 
+Testing command policy:
+- Prefer `npm test` for repository tests (the script enforces Jest `--runInBand`).
+- Do not run `jest` directly unless `--runInBand` is explicitly included.
+
 Report pre-existing failures separately from regressions caused by your changes.
 
 ## Well-Architected Baseline

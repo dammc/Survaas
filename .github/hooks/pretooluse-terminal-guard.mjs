@@ -12,6 +12,11 @@ const TERMINAL_READ_TOOLS = new Set([
 
 const denyRules = [
   {
+    id: "deny-jest-without-runinband",
+    reason: "Direct jest invocation must include --runInBand.",
+    regex: /^(?:npx\s+)?jest(?:\s|$)(?!.*--runinband(?:\s|$))/
+  },
+  {
     id: "deny-cdk-mutation",
     reason: "Cloud-mutating CDK commands are blocked by repository policy.",
     regex: /\b(?:npx\s+)?cdk\s+(?:deploy|destroy|bootstrap)\b/
@@ -50,7 +55,11 @@ const allowRules = [
   },
   {
     id: "allow-test",
-    regex: /^npm\s+test(?:\s|$)/
+    regex: /^npm\s+(?:run\s+)?test(?:\s|$)/
+  },
+  {
+    id: "allow-jest-runinband",
+    regex: /^(?:npx\s+)?jest(?:\s|$).*--runinband(?:\s|$)/
   },
   {
     id: "allow-typecheck",
