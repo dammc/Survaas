@@ -81,7 +81,19 @@ describe('SurvaasClusterStack', () => {
 
       const ecsTemplate = Template.fromStack(stack.surveyEcsStack);
       ecsTemplate.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 0);
+      ecsTemplate.resourceCountIs('AWS::EFS::FileSystem', 1);
+      ecsTemplate.resourceCountIs('AWS::EFS::AccessPoint', 0);
       ecsTemplate.hasResourceProperties('AWS::ECS::TaskDefinition', {
+        Volumes: Match.arrayWith([
+          Match.objectLike({
+            EFSVolumeConfiguration: Match.objectLike({
+              TransitEncryption: 'ENABLED',
+              AuthorizationConfig: Match.objectLike({
+                IAM: 'ENABLED',
+              }),
+            }),
+          }),
+        ]),
         ContainerDefinitions: Match.arrayWith([
           Match.objectLike({
             Environment: Match.arrayWith([

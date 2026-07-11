@@ -130,8 +130,8 @@ Traffic is routed via explicit host-header listener rules and unmatched traffic 
 The default setup uses the shared ALB DNS name as host header, so no public domain is required for initial HTTP access.
 The ECS task CPU and memory is set to the minimum default values, .25 vCPU and 0.5 GB memory,
 so you might want to consider increasing them in the SurveyEcsStack.
-The containers share a managed EBS volume of 15 gibibytes for data persistence.
-You may increase this default size there, as well.
+The containers share an Amazon EFS file system for persistent application data.
+The EFS file system is encrypted with a customer managed KMS key and mounted via IAM authorization.
 
 #### Storage
 
