@@ -30,8 +30,9 @@ export class SecurityGroupsConstruct extends Construct {
      * @param scope The scope in which to define this construct
      * @param id The scoped construct ID
      * @param vpc The VPC where the security groups will be created
+     * @param loadBalancerSecurityGroup Optional shared load balancer security group
      */
-    constructor(scope: Construct, id: string, vpc: ec2.Vpc) {
+    constructor(scope: Construct, id: string, vpc: ec2.Vpc, loadBalancerSecurityGroup?: ec2.SecurityGroup) {
         super(scope, id);
 
         this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSecurityGroup', {
@@ -39,7 +40,7 @@ export class SecurityGroupsConstruct extends Construct {
             description: 'SecurityGroup of the DB cluster',
         });
 
-        this.loadBalancerSecurityGroup = new ec2.SecurityGroup(this, 'LoadBalancerSecurityGroup', {
+        this.loadBalancerSecurityGroup = loadBalancerSecurityGroup ?? new ec2.SecurityGroup(this, 'LoadBalancerSecurityGroup', {
             vpc: vpc,
             description: 'SecurityGroup of the loadbalancer for the survey ECS cluster',
         });

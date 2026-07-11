@@ -1,4 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { EncryptionStack } from './kms';
 import { RdsStack } from './rds';
@@ -8,6 +10,13 @@ import * as smr from 'aws-cdk-lib/aws-secretsmanager';
 import { SurveyImageStack } from './ecr';
 import { SurveyEcsStack } from './ecs';
 import { SurveyVpcConstruct } from '../construct/vpc';
+
+export interface SurvaasClusterRouteConfig {
+  /** Host-based routing conditions for this cluster's service */
+  hostHeaders: string[],
+  /** Explicit listener rule priority */
+  priority: number,
+}
 /**
  * Interface for SurvaasClusterStack properties
  * @interface SurvaasClusterStackProps
@@ -18,6 +27,12 @@ interface SurvaasClusterStackProps extends cdk.StackProps {
   appName: string,
   /** VPC where application resources will be deployed */
   surveyVpcConstruct: SurveyVpcConstruct,
+  /** Shared listener used across all SurvaasClusterStacks */
+  sharedListener: elbv2.ApplicationListener,
+  /** Shared load balancer security group used across all SurvaasClusterStacks */
+  sharedLoadBalancerSecurityGroup: ec2.SecurityGroup,
+  /** Host-based route configuration for this cluster */
+  routeConfig: SurvaasClusterRouteConfig,
 }
 
 /**
@@ -58,7 +73,12 @@ export class SurvaasClusterStack extends cdk.Stack {
       },
     });
 
-    this.securityGroups = new SecurityGroupsConstruct(this, 'SecurityGroups', props.surveyVpcConstruct.vpc);
+    this.securityGroups = new SecurityGroupsConstruct(
+      this,
+      'SecurityGroups',
+      props.surveyVpcConstruct.vpc,
+      props.sharedLoadBalancerSecurityGroup,
+    );
 
     this.rdsStack = new RdsStack(this, 'SurveyDb', {
       appName: props.appName,
@@ -106,8 +126,10 @@ export class SurvaasClusterStack extends cdk.Stack {
         account: this.account,
         region: this.region,
       },
-      loadBalancerSecurityGroup: this.securityGroups.loadBalancerSecurityGroup,
       serviceSecurityGroup: this.securityGroups.serviceSecurityGroup,
+      sharedListener: props.sharedListener,
+      hostHeaders: props.routeConfig.hostHeaders,
+      listenerPriority: props.routeConfig.priority,
     });
     this.surveyEcsStack.addDependency(this.rdsStack);
   }
