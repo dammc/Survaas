@@ -1,10 +1,9 @@
-import { NestedStack, Stack, StackProps, Size } from 'aws-cdk-lib';
+import { NestedStack, Stack, StackProps, Size, Token } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as smr from 'aws-cdk-lib/aws-secretsmanager';
-import { ApplicationLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 /**
@@ -23,12 +22,16 @@ interface SurveyEcsStackProps extends StackProps {
     vpc: ec2.Vpc,
     /** KMS key for encryption */
     kmsKey: kms.IKey,
-    /** security group for the load balancer */
-    loadBalancerSecurityGroup: ec2.SecurityGroup,
     /** security group for the service */
     serviceSecurityGroup: ec2.SecurityGroup,
     /** the secret with credentials of the RDS database */
     dbSecret: smr.Secret,
+    /** shared listener used across all SurvaasClusterStacks */
+    sharedListener: elbv2.ApplicationListener,
+    /** host-based routing values for this service */
+    hostHeaders: string[],
+    /** explicit listener priority from root config */
+    listenerPriority: number,
 }
 
 /**
@@ -48,8 +51,12 @@ export class SurveyEcsStack extends Stack {
     public readonly surveyVolume: ecs.ServiceManagedVolume;
     /** Nested stack containing the service */
     public readonly nestedServiceStack: NestedStack;
-    /** Load balanced Fargate service */
-    public readonly surveyLoadBalancedService: ecs_patterns.ApplicationLoadBalancedFargateService;
+    /** Fargate service routed by the shared listener */
+    public readonly surveyLoadBalancedService: ecs.FargateService;
+    /** Target group used by the shared listener rule */
+    public readonly surveyTargetGroup: elbv2.ApplicationTargetGroup;
+    /** Host-based listener rule attached to the shared listener */
+    public readonly surveyListenerRule: elbv2.ApplicationListenerRule;
 
     /**
      * Creates a new SurveyEcsStack
@@ -67,18 +74,27 @@ export class SurveyEcsStack extends Stack {
               },
         });
 
-        this.surveyTaskDefinition = new ecs.FargateTaskDefinition(this, props.appName + 'TaskDefiniton');
+        this.surveyTaskDefinition = new ecs.FargateTaskDefinition(this, props.appName + 'TaskDefiniton',
+            {
+                cpu: 256,
+                memoryLimitMiB: 512,
+            }
+        );
 
         this.surveyVolume = new ecs.ServiceManagedVolume(this, props.appName + 'Ebs', {
-            name: props.appName + 'Ebs',
+            name: props.appName + 'EbsDebugVolume',
             managedEBSVolume: {
                 size: Size.gibibytes(15),
+                encrypted: true,
                 kmsKeyId: props.kmsKey,
                 volumeType: ec2.EbsDeviceVolumeType.GP3,
                 fileSystemType: ecs.FileSystemType.XFS,
             },
         });
-        this.surveyTaskDefinition.addVolume({ name: this.surveyVolume.name });
+        this.surveyTaskDefinition.addVolume({ 
+            name: this.surveyVolume.name,
+            configuredAtLaunch: true,
+        });
 
         this.surveyContainer = ecs.ContainerImage.fromDockerImageAsset(props.imageAsset);
 
@@ -122,18 +138,40 @@ export class SurveyEcsStack extends Stack {
             readOnly: false,
         });
 
+        const normalizedHostHeaders = props.hostHeaders
+            .map((hostHeader) => {
+                const trimmedHostHeader = hostHeader.trim();
+                return Token.isUnresolved(trimmedHostHeader) ? trimmedHostHeader : trimmedHostHeader.toLowerCase();
+            })
+            .filter((hostHeader) => hostHeader.length > 0);
+
+        if (normalizedHostHeaders.length === 0) {
+            throw new Error('SurveyEcsStack requires at least one host header for listener routing.');
+        }
+
         this.nestedServiceStack = new NestedStack(this, 'NestedServiceStack');
 
-        this.surveyLoadBalancedService =
-            new ecs_patterns.ApplicationLoadBalancedFargateService(this.nestedServiceStack, 'LoadBalancedSurveyService', {
-                cluster: this.surveyCluster,
-                loadBalancer: new ApplicationLoadBalancer(this, props.appName + 'ApplicationLoadbalancer', {
-                    vpc: props.vpc,
-                    securityGroup: props.loadBalancerSecurityGroup,
-                    internetFacing: true,
-                }),
-                taskDefinition: this.surveyTaskDefinition,
-                securityGroups: [props.serviceSecurityGroup],
-            });
+        this.surveyLoadBalancedService = new ecs.FargateService(this.nestedServiceStack, 'SurveyFargateService', {
+            cluster: this.surveyCluster,
+            desiredCount: 1,
+            minHealthyPercent: 50,
+            taskDefinition: this.surveyTaskDefinition,
+            securityGroups: [props.serviceSecurityGroup],
+            volumeConfigurations: [this.surveyVolume],
+        });
+
+        this.surveyTargetGroup = new elbv2.ApplicationTargetGroup(this.nestedServiceStack, 'SurveyTargetGroup', {
+            vpc: props.vpc,
+            protocol: elbv2.ApplicationProtocol.HTTP,
+            port: 80,
+            targets: [this.surveyLoadBalancedService],
+        });
+
+        this.surveyListenerRule = new elbv2.ApplicationListenerRule(this.nestedServiceStack, 'SurveyListenerRule', {
+            listener: props.sharedListener,
+            priority: props.listenerPriority,
+            conditions: [elbv2.ListenerCondition.hostHeaders(normalizedHostHeaders)],
+            action: elbv2.ListenerAction.forward([this.surveyTargetGroup]),
+        });
     }
 };

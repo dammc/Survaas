@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { SurvaasRootStack } from '../lib/root';
-import { beforeEach, describe, test } from '@jest/globals';
+import { beforeEach, describe, expect, test } from '@jest/globals';
 
 describe('SurvaasRootStack', () => {
   let app: cdk.App;
@@ -37,5 +37,47 @@ describe('SurvaasRootStack', () => {
     
     // Verify NAT Gateway has an Elastic IP
     template.resourceCountIs('AWS::EC2::EIP', 1);
+  });
+
+  test('Survey URL output points to the shared load balancer DNS name', () => {
+    template.hasOutput('SurveyEnvironmentUrl', {
+      Value: Match.anyValue(),
+    });
+
+    const surveyUrlOutput = template.findOutputs('SurveyEnvironmentUrl').SurveyEnvironmentUrl;
+    expect(JSON.stringify(surveyUrlOutput.Value)).toContain('http://');
+    expect(JSON.stringify(surveyUrlOutput.Value)).toContain('SharedSurveyApplicationLoadbalancer');
+  });
+
+  test('WAF starter kit is attached to the shared load balancer', () => {
+    template.resourceCountIs('AWS::WAFv2::WebACL', 1);
+    template.resourceCountIs('AWS::WAFv2::WebACLAssociation', 1);
+
+    template.hasResourceProperties('AWS::WAFv2::WebACL', {
+      Scope: 'REGIONAL',
+      Rules: Match.arrayWith([
+        Match.objectLike({
+          Name: 'AwsManagedIpReputation',
+        }),
+        Match.objectLike({
+          Name: 'AwsManagedKnownBadInputs',
+        }),
+        Match.objectLike({
+          Name: 'AwsManagedCommon',
+        }),
+        Match.objectLike({
+          Name: 'AwsManagedSqlInjection',
+        }),
+        Match.objectLike({
+          Name: 'RateLimitByIp',
+          Statement: Match.objectLike({
+            RateBasedStatement: Match.objectLike({
+              AggregateKeyType: 'IP',
+              Limit: 2000,
+            }),
+          }),
+        }),
+      ]),
+    });
   });
 });
