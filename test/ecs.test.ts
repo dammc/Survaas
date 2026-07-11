@@ -86,6 +86,7 @@ describe('SurveyEcsStack', () => {
       kmsKey: encryptionStack.surveyKmsKey,
       dbSecret: dbSecret,
       serviceSecurityGroup: securityGroups.serviceSecurityGroup,
+      efsSecurityGroup: securityGroups.efsSecurityGroup,
       sharedListener: sharedListener,
       hostHeaders: ['test-app.example.local'],
       listenerPriority: 100,
@@ -104,6 +105,28 @@ describe('SurveyEcsStack', () => {
     expect(template).toBeDefined();
 
     template.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 0);
+    template.resourceCountIs('AWS::EFS::FileSystem', 1);
+    template.resourceCountIs('AWS::EFS::AccessPoint', 0);
+
+    template.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      Volumes: Match.arrayWith([
+        Match.objectLike({
+          EFSVolumeConfiguration: Match.objectLike({
+            TransitEncryption: 'ENABLED',
+            AuthorizationConfig: Match.objectLike({
+              IAM: 'ENABLED',
+            }),
+          }),
+        }),
+      ]),
+      ContainerDefinitions: Match.arrayWith([
+        Match.objectLike({
+          MountPoints: Match.arrayWith([
+            Match.objectLike({ SourceVolume: 'TestAppEfsVolume' }),
+          ]),
+        }),
+      ]),
+    });
 
     const nestedTemplate = Template.fromStack(stack.nestedServiceStack);
     nestedTemplate.resourceCountIs('AWS::ECS::Service', 1);
@@ -117,6 +140,14 @@ describe('SurveyEcsStack', () => {
         }),
       ]),
     });
+
+    const services = nestedTemplate.findResources('AWS::ECS::Service');
+    const service = Object.values(services)[0] as {
+      Properties: {
+        VolumeConfigurations?: unknown;
+      };
+    };
+    expect(service.Properties.VolumeConfigurations).toBeUndefined();
   });
 
   test('Admin username is fixed and admin password is provided via Secrets Manager', () => {
@@ -172,6 +203,20 @@ describe('SurveyEcsStack', () => {
         Statement: Match.arrayWith([
           Match.objectLike({
             Action: Match.arrayWith(['secretsmanager:GetSecretValue']),
+            Effect: 'Allow',
+          }),
+        ]),
+      },
+    });
+
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Action: Match.arrayWith([
+              'elasticfilesystem:ClientMount',
+              'elasticfilesystem:ClientWrite',
+            ]),
             Effect: 'Allow',
           }),
         ]),

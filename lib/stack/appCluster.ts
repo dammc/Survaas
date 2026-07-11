@@ -127,6 +127,7 @@ export class SurvaasClusterStack extends cdk.Stack {
         region: this.region,
       },
       serviceSecurityGroup: this.securityGroups.serviceSecurityGroup,
+      efsSecurityGroup: this.securityGroups.efsSecurityGroup,
       sharedListener: props.sharedListener,
       hostHeaders: props.routeConfig.hostHeaders,
       listenerPriority: props.routeConfig.priority,

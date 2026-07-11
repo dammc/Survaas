@@ -21,6 +21,11 @@ export class SecurityGroupsConstruct extends Construct {
     public readonly serviceSecurityGroup: ec2.SecurityGroup;
 
     /**
+     * Security group for the EFS file system
+     */
+    public readonly efsSecurityGroup: ec2.SecurityGroup;
+
+    /**
      * Security group for the SageMaker analytics domain
      */
     public readonly analyticsSecurityGroup: ec2.SecurityGroup;
@@ -50,6 +55,11 @@ export class SecurityGroupsConstruct extends Construct {
             description: 'SecurityGroup of the ECS cluster',
         });
 
+        this.efsSecurityGroup = new ec2.SecurityGroup(this, 'EfsSecurityGroup', {
+            vpc: vpc,
+            description: 'SecurityGroup of the EFS file system used by ECS tasks',
+        });
+
         this.analyticsSecurityGroup = new ec2.SecurityGroup(this, 'AnalyticsSecurityGroup', {
             vpc: vpc,
             description: 'SecurityGroup of the Sagemaker Domain',
@@ -71,6 +81,12 @@ export class SecurityGroupsConstruct extends Construct {
         this.serviceSecurityGroup.addIngressRule(
             ec2.Peer.securityGroupId(this.loadBalancerSecurityGroup.securityGroupId),
             ec2.Port.HTTP,
+        );
+
+        // allow ECS tasks to reach EFS mount targets over NFS
+        this.efsSecurityGroup.addIngressRule(
+            ec2.Peer.securityGroupId(this.serviceSecurityGroup.securityGroupId),
+            ec2.Port.tcp(2049),
         );
     }
 }   

@@ -1,7 +1,9 @@
-import { NestedStack, Stack, StackProps, Size, Token } from 'aws-cdk-lib';
+import { NestedStack, RemovalPolicy, Stack, StackProps, Token } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as efs from 'aws-cdk-lib/aws-efs';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as smr from 'aws-cdk-lib/aws-secretsmanager';
 import * as kms from 'aws-cdk-lib/aws-kms';
@@ -24,6 +26,8 @@ interface SurveyEcsStackProps extends StackProps {
     kmsKey: kms.IKey,
     /** security group for the service */
     serviceSecurityGroup: ec2.SecurityGroup,
+    /** security group for the EFS file system */
+    efsSecurityGroup: ec2.SecurityGroup,
     /** the secret with credentials of the RDS database */
     dbSecret: smr.Secret,
     /** shared listener used across all SurvaasClusterStacks */
@@ -47,8 +51,8 @@ export class SurveyEcsStack extends Stack {
     public readonly surveyContainer: ecs.ContainerImage;
     /** Container definition within the task */
     public readonly surveyContainerDefinition: ecs.ContainerDefinition;
-    /** EBS volume for persistent storage */
-    public readonly surveyVolume: ecs.ServiceManagedVolume;
+    /** EFS file system for persistent storage */
+    public readonly surveyFileSystem: efs.FileSystem;
     /** Nested stack containing the service */
     public readonly nestedServiceStack: NestedStack;
     /** Fargate service routed by the shared listener */
@@ -81,20 +85,32 @@ export class SurveyEcsStack extends Stack {
             }
         );
 
-        this.surveyVolume = new ecs.ServiceManagedVolume(this, props.appName + 'Ebs', {
-            name: props.appName + 'EbsDebugVolume',
-            managedEBSVolume: {
-                size: Size.gibibytes(15),
-                encrypted: true,
-                kmsKeyId: props.kmsKey,
-                volumeType: ec2.EbsDeviceVolumeType.GP3,
-                fileSystemType: ecs.FileSystemType.XFS,
+        this.surveyFileSystem = new efs.FileSystem(this, props.appName + 'Efs', {
+            vpc: props.vpc,
+            allowAnonymousAccess: false,
+            encrypted: true,
+            kmsKey: props.kmsKey,
+            removalPolicy: RemovalPolicy.DESTROY,
+            securityGroup: props.efsSecurityGroup,
+            vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        });
+
+        const surveyVolumeName = props.appName + 'EfsVolume';
+        this.surveyTaskDefinition.addVolume({ 
+            name: surveyVolumeName,
+            efsVolumeConfiguration: {
+                fileSystemId: this.surveyFileSystem.fileSystemId,
+                transitEncryption: 'ENABLED',
+                authorizationConfig: {
+                    iam: 'ENABLED',
+                },
             },
         });
-        this.surveyTaskDefinition.addVolume({ 
-            name: this.surveyVolume.name,
-            configuredAtLaunch: true,
-        });
+
+        this.surveyTaskDefinition.taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
+            actions: ['elasticfilesystem:ClientMount', 'elasticfilesystem:ClientWrite'],
+            resources: [this.surveyFileSystem.fileSystemArn],
+        }));
 
         this.surveyContainer = ecs.ContainerImage.fromDockerImageAsset(props.imageAsset);
 
@@ -121,20 +137,24 @@ export class SurveyEcsStack extends Stack {
             containerPort: 80,
         });
 
-        this.surveyVolume.mountIn(this.surveyContainerDefinition, {
+        this.surveyContainerDefinition.addMountPoints({
             containerPath: '/var/www/html/plugins',
+            sourceVolume: surveyVolumeName,
             readOnly: false,
         });
-        this.surveyVolume.mountIn(this.surveyContainerDefinition, {
+        this.surveyContainerDefinition.addMountPoints({
             containerPath: '/var/www/html/upload',
+            sourceVolume: surveyVolumeName,
             readOnly: false,
         });
-        this.surveyVolume.mountIn(this.surveyContainerDefinition, {
+        this.surveyContainerDefinition.addMountPoints({
             containerPath: '/var/www/html/application/config',
+            sourceVolume: surveyVolumeName,
             readOnly: false,
         });
-        this.surveyVolume.mountIn(this.surveyContainerDefinition, {
+        this.surveyContainerDefinition.addMountPoints({
             containerPath: '/var/lime/sessions',
+            sourceVolume: surveyVolumeName,
             readOnly: false,
         });
 
@@ -157,7 +177,6 @@ export class SurveyEcsStack extends Stack {
             minHealthyPercent: 50,
             taskDefinition: this.surveyTaskDefinition,
             securityGroups: [props.serviceSecurityGroup],
-            volumeConfigurations: [this.surveyVolume],
         });
 
         this.surveyTargetGroup = new elbv2.ApplicationTargetGroup(this.nestedServiceStack, 'SurveyTargetGroup', {
