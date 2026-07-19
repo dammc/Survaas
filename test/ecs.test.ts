@@ -106,7 +106,13 @@ describe('SurveyEcsStack', () => {
 
     template.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 0);
     template.resourceCountIs('AWS::EFS::FileSystem', 1);
-    template.resourceCountIs('AWS::EFS::AccessPoint', 0);
+    template.resourceCountIs('AWS::EFS::AccessPoint', 1);
+    template.resourceCountIs('AWS::Logs::LogGroup', 1);
+
+    template.hasResourceProperties('AWS::Logs::LogGroup', {
+      RetentionInDays: 30,
+      KmsKeyId: Match.anyValue(),
+    });
 
     template.hasResourceProperties('AWS::ECS::TaskDefinition', {
       Volumes: Match.arrayWith([
@@ -114,6 +120,7 @@ describe('SurveyEcsStack', () => {
           EFSVolumeConfiguration: Match.objectLike({
             TransitEncryption: 'ENABLED',
             AuthorizationConfig: Match.objectLike({
+              AccessPointId: Match.anyValue(),
               IAM: 'ENABLED',
             }),
           }),
@@ -121,11 +128,32 @@ describe('SurveyEcsStack', () => {
       ]),
       ContainerDefinitions: Match.arrayWith([
         Match.objectLike({
+          LogConfiguration: Match.objectLike({
+            LogDriver: 'awslogs',
+            Options: Match.objectLike({
+              'awslogs-group': Match.anyValue(),
+              'awslogs-stream-prefix': 'TestApp',
+            }),
+          }),
           MountPoints: Match.arrayWith([
             Match.objectLike({ SourceVolume: 'TestAppEfsVolume' }),
           ]),
         }),
       ]),
+    });
+
+    template.hasResourceProperties('AWS::EFS::FileSystem', {
+      FileSystemPolicy: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Action: Match.arrayWith([
+              'elasticfilesystem:ClientMount',
+              'elasticfilesystem:ClientWrite',
+              'elasticfilesystem:ClientRootAccess',
+            ]),
+          }),
+        ]),
+      },
     });
 
     const nestedTemplate = Template.fromStack(stack.nestedServiceStack);
@@ -148,6 +176,23 @@ describe('SurveyEcsStack', () => {
       };
     };
     expect(service.Properties.VolumeConfigurations).toBeUndefined();
+
+    const fileSystems = template.findResources('AWS::EFS::FileSystem');
+    const fileSystem = Object.values(fileSystems)[0] as {
+      Properties: {
+        FileSystemPolicy: {
+          Statement: Array<{
+            Principal?: {
+              AWS?: unknown;
+            };
+          }>;
+        };
+      };
+    };
+    const principals = fileSystem.Properties.FileSystemPolicy.Statement
+      .map((statement) => statement.Principal?.AWS)
+      .filter((principal) => principal !== undefined);
+    expect(principals).not.toContain('*');
   });
 
   test('Admin username is fixed and admin password is provided via Secrets Manager', () => {
@@ -216,7 +261,13 @@ describe('SurveyEcsStack', () => {
             Action: Match.arrayWith([
               'elasticfilesystem:ClientMount',
               'elasticfilesystem:ClientWrite',
+              'elasticfilesystem:ClientRootAccess',
             ]),
+            Condition: Match.objectLike({
+              StringEquals: Match.objectLike({
+                'elasticfilesystem:AccessPointArn': Match.anyValue(),
+              }),
+            }),
             Effect: 'Allow',
           }),
         ]),
