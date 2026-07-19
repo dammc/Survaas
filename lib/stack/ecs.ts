@@ -7,6 +7,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as smr from 'aws-cdk-lib/aws-secretsmanager';
 import * as kms from 'aws-cdk-lib/aws-kms';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 /**
  * Props interface for SurveyEcsStack
@@ -51,8 +52,12 @@ export class SurveyEcsStack extends Stack {
     public readonly surveyContainer: ecs.ContainerImage;
     /** Container definition within the task */
     public readonly surveyContainerDefinition: ecs.ContainerDefinition;
+    /** CloudWatch log group for container logs */
+    public readonly surveyContainerLogGroup: logs.LogGroup;
     /** EFS file system for persistent storage */
     public readonly surveyFileSystem: efs.FileSystem;
+    /** EFS access point used for scoped task mounts */
+    public readonly surveyAccessPoint: efs.AccessPoint;
     /** Nested stack containing the service */
     public readonly nestedServiceStack: NestedStack;
     /** Fargate service routed by the shared listener */
@@ -85,14 +90,42 @@ export class SurveyEcsStack extends Stack {
             }
         );
 
+        const taskRolePrincipal = new iam.ArnPrincipal(this.surveyTaskDefinition.taskRole.roleArn);
+
         this.surveyFileSystem = new efs.FileSystem(this, props.appName + 'Efs', {
             vpc: props.vpc,
-            allowAnonymousAccess: false,
+            allowAnonymousAccess: true,
             encrypted: true,
+            fileSystemPolicy: new iam.PolicyDocument({
+                statements: [
+                    new iam.PolicyStatement({
+                        actions: ['elasticfilesystem:ClientMount', 'elasticfilesystem:ClientWrite', 'elasticfilesystem:ClientRootAccess'],
+                        principals: [taskRolePrincipal],
+                        resources: ['*'],
+                        conditions: {
+                            Bool: {
+                                'elasticfilesystem:AccessedViaMountTarget': 'true',
+                            },
+                        },
+                    }),
+                ],
+            }),
             kmsKey: props.kmsKey,
             removalPolicy: RemovalPolicy.DESTROY,
             securityGroup: props.efsSecurityGroup,
             vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+        });
+        this.surveyAccessPoint = this.surveyFileSystem.addAccessPoint(props.appName + 'EfsAccessPoint', {
+            path: '/survaas',
+            createAcl: {
+                ownerGid: '0',
+                ownerUid: '0',
+                permissions: '0770',
+            },
+            posixUser: {
+                gid: '0',
+                uid: '0',
+            },
         });
 
         const surveyVolumeName = props.appName + 'EfsVolume';
@@ -102,20 +135,37 @@ export class SurveyEcsStack extends Stack {
                 fileSystemId: this.surveyFileSystem.fileSystemId,
                 transitEncryption: 'ENABLED',
                 authorizationConfig: {
+                    accessPointId: this.surveyAccessPoint.accessPointId,
                     iam: 'ENABLED',
                 },
             },
         });
 
         this.surveyTaskDefinition.taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
-            actions: ['elasticfilesystem:ClientMount', 'elasticfilesystem:ClientWrite'],
+            actions: ['elasticfilesystem:ClientMount', 'elasticfilesystem:ClientWrite', 'elasticfilesystem:ClientRootAccess'],
             resources: [this.surveyFileSystem.fileSystemArn],
+            conditions: {
+                StringEquals: {
+                    'elasticfilesystem:AccessPointArn': this.surveyAccessPoint.accessPointArn,
+                },
+            },
         }));
 
         this.surveyContainer = ecs.ContainerImage.fromDockerImageAsset(props.imageAsset);
 
+        this.surveyContainerLogGroup = new logs.LogGroup(this, props.appName + 'ContainerLogs', {
+            logGroupName: '/survaas/' + props.appName + '/ecs',
+            encryptionKey: props.kmsKey,
+            retention: logs.RetentionDays.ONE_MONTH,
+            removalPolicy: RemovalPolicy.DESTROY,
+        });
+
         this.surveyContainerDefinition = this.surveyTaskDefinition.addContainer(props.appName + 'Container', {
             image: this.surveyContainer,
+            logging: ecs.LogDrivers.awsLogs({
+                logGroup: this.surveyContainerLogGroup,
+                streamPrefix: props.appName,
+            }),
             environment: {
                 'LIMESURVEY_ADMIN_USER': 'admin',
                 'LIMESURVEY_TABLE_PREFIX': 'survaas_',
@@ -173,6 +223,7 @@ export class SurveyEcsStack extends Stack {
 
         this.surveyLoadBalancedService = new ecs.FargateService(this.nestedServiceStack, 'SurveyFargateService', {
             cluster: this.surveyCluster,
+            circuitBreaker: { rollback: false },
             desiredCount: 1,
             minHealthyPercent: 50,
             taskDefinition: this.surveyTaskDefinition,
