@@ -131,7 +131,7 @@ The default setup uses the shared ALB DNS name as host header, so no public doma
 The ECS task CPU and memory is set to the minimum default values, .25 vCPU and 0.5 GB memory,
 so you might want to consider increasing them in the SurveyEcsStack.
 The containers share an Amazon EFS file system for persistent application data.
-The EFS file system is encrypted with a customer managed KMS key and mounted via IAM authorization.
+The EFS file system is encrypted with a customer managed KMS key and mounted via IAM authorization through an EFS access point.
 
 #### Storage
 
@@ -159,6 +159,7 @@ The shared load balancer security group is owned by the root stack and reused by
 Each SurvaasClusterStack still has dedicated security groups for ECS services, RDS and SageMaker.
 All of them come with appropriately restricted in- and egress rules 
 in order to properly isolate them from the resources of other SurvaasClusterStacks.
+The ECS service security group allows only explicit outbound traffic for DNS resolution, HTTPS access to AWS service endpoints, PostgreSQL to RDS, and NFS to EFS.
 
 #### Encryption
 
@@ -367,3 +368,14 @@ As your load balancer directly faces the internet, Survaas provisions a starter 
 The baseline includes managed rule groups for IP reputation, known bad inputs, common web threats and SQL injection,
 plus a rate-based rule to block basic request floods.
 For production traffic, monitor blocked requests and tune exclusions/rate limits based on your application behavior.
+
+### Custom Admin User
+
+An initial admin user is provided on deployment for every survey cluster. 
+The password for the initial admin user is set when the respective task container starts.
+It can be changed in the UI of the survey app, but gets reset to the  
+secrets manager password for every newly launched container.
+This can cause inconsistent and confusing behavior because containers
+launched at different points in time can have different passwords for the initial admin user.
+Therefore it's highly recommended to create a custom admin user whose password can persistently be changed
+for managing the survey app.
