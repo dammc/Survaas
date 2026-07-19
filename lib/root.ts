@@ -78,6 +78,12 @@ export class SurvaasRootStack extends cdk.Stack {
             managedRuleGroupStatement: {
               vendorName: 'AWS',
               name: 'AWSManagedRulesAmazonIpReputationList',
+              ruleActionOverrides: [
+                {
+                name: 'AWSManagedIPReputationList',
+                actionToUse: { block: {} },
+              },
+            ],
             },
           },
           visibilityConfig: {
@@ -110,6 +116,16 @@ export class SurvaasRootStack extends cdk.Stack {
             managedRuleGroupStatement: {
               vendorName: 'AWS',
               name: 'AWSManagedRulesCommonRuleSet',
+              ruleActionOverrides: [
+                {
+                  name: 'SizeRestrictions_BODY',
+                  actionToUse: { count: {} },
+                },
+                {
+                  name: 'CrossSiteScripting_BODY',
+                  actionToUse: { count: {} },
+                },
+              ],
             },
           },
           visibilityConfig: {
