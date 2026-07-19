@@ -53,6 +53,7 @@ export class SecurityGroupsConstruct extends Construct {
         this.serviceSecurityGroup = new ec2.SecurityGroup(this, 'ServiceSecurityGroup', {
             vpc: vpc,
             description: 'SecurityGroup of the ECS cluster',
+            allowAllOutbound: false,
         });
 
         this.efsSecurityGroup = new ec2.SecurityGroup(this, 'EfsSecurityGroup', {
@@ -87,6 +88,34 @@ export class SecurityGroupsConstruct extends Construct {
         this.efsSecurityGroup.addIngressRule(
             ec2.Peer.securityGroupId(this.serviceSecurityGroup.securityGroupId),
             ec2.Port.tcp(2049),
+        );
+
+        // allow ECS tasks to connect to PostgreSQL inside the VPC
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.POSTGRES,
+        );
+
+        // allow ECS tasks to mount NFS targets inside the VPC
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(2049),
+        );
+
+        // allow ECS tasks to resolve DNS using VPC resolvers
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.udp(53),
+        );
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(53),
+        );
+
+        // allow ECS tasks to reach AWS service endpoints over HTTPS via NAT
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.anyIpv4(),
+            ec2.Port.tcp(443),
         );
     }
 }   
