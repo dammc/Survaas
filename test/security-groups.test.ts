@@ -36,6 +36,36 @@ describe('SecurityGroupsConstruct', () => {
         }),
       ]),
     });
+
+    const securityGroups = template.findResources('AWS::EC2::SecurityGroup');
+    const serviceSecurityGroup = Object.values(securityGroups).find((resource) => {
+      return (resource as { Properties?: { GroupDescription?: string } }).Properties?.GroupDescription === 'SecurityGroup of the ECS cluster';
+    }) as {
+      Properties: {
+        SecurityGroupEgress?: Array<{
+          IpProtocol?: string;
+          CidrIp?: string;
+          FromPort?: number;
+          ToPort?: number;
+        }>;
+      };
+    };
+
+    expect(serviceSecurityGroup).toBeDefined();
+    expect(serviceSecurityGroup.Properties.SecurityGroupEgress).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ IpProtocol: 'tcp', FromPort: 5432, ToPort: 5432 }),
+        expect.objectContaining({ IpProtocol: 'tcp', FromPort: 2049, ToPort: 2049 }),
+        expect.objectContaining({ IpProtocol: 'tcp', FromPort: 443, ToPort: 443, CidrIp: '0.0.0.0/0' }),
+        expect.objectContaining({ IpProtocol: 'udp', FromPort: 53, ToPort: 53 }),
+        expect.objectContaining({ IpProtocol: 'tcp', FromPort: 53, ToPort: 53 }),
+      ]),
+    );
+
+    const hasDefaultOpenEgress = (serviceSecurityGroup.Properties.SecurityGroupEgress ?? []).some((rule) => {
+      return rule.IpProtocol === '-1' && rule.CidrIp === '0.0.0.0/0';
+    });
+    expect(hasDefaultOpenEgress).toBe(false);
   });
 
   test('A provided shared load balancer security group is reused', () => {

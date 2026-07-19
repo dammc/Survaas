@@ -82,13 +82,15 @@ describe('SurvaasClusterStack', () => {
       const ecsTemplate = Template.fromStack(stack.surveyEcsStack);
       ecsTemplate.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 0);
       ecsTemplate.resourceCountIs('AWS::EFS::FileSystem', 1);
-      ecsTemplate.resourceCountIs('AWS::EFS::AccessPoint', 0);
+      ecsTemplate.resourceCountIs('AWS::EFS::AccessPoint', 1);
+      ecsTemplate.resourceCountIs('AWS::Logs::LogGroup', 1);
       ecsTemplate.hasResourceProperties('AWS::ECS::TaskDefinition', {
         Volumes: Match.arrayWith([
           Match.objectLike({
             EFSVolumeConfiguration: Match.objectLike({
               TransitEncryption: 'ENABLED',
               AuthorizationConfig: Match.objectLike({
+                AccessPointId: Match.anyValue(),
                 IAM: 'ENABLED',
               }),
             }),
@@ -96,6 +98,13 @@ describe('SurvaasClusterStack', () => {
         ]),
         ContainerDefinitions: Match.arrayWith([
           Match.objectLike({
+            LogConfiguration: Match.objectLike({
+              LogDriver: 'awslogs',
+              Options: Match.objectLike({
+                'awslogs-group': Match.anyValue(),
+                'awslogs-stream-prefix': 'TestApp',
+              }),
+            }),
             Environment: Match.arrayWith([
               {
                 Name: 'LIMESURVEY_ADMIN_USER',
