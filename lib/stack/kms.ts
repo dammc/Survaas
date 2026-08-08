@@ -1,5 +1,6 @@
 import { Construct } from 'constructs';
 import { Stack, StackProps } from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
 /**
  * Stack that creates KMS encryption keys for the application
@@ -42,5 +43,26 @@ export class EncryptionStack extends Stack {
             description: 'KMS key for survey data',
             enableKeyRotation: true,
         });
+
+        this.surveyKmsKey.addToResourcePolicy(new iam.PolicyStatement({
+            sid: 'AllowCloudWatchLogsDescribeSurveyContainerKey',
+            effect: iam.Effect.ALLOW,
+            principals: [new iam.ServicePrincipal(`logs.${this.region}.amazonaws.com`)],
+            actions: ['kms:DescribeKey'],
+            resources: ['*'],
+        }));
+
+        this.surveyKmsKey.addToResourcePolicy(new iam.PolicyStatement({
+            sid: 'AllowCloudWatchLogsForSurveyContainerLogs',
+            effect: iam.Effect.ALLOW,
+            principals: [new iam.ServicePrincipal(`logs.${this.region}.amazonaws.com`)],
+            actions: ['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*'],
+            resources: ['*'],
+            conditions: {
+                ArnLike: {
+                    'kms:EncryptionContext:aws:logs:arn': `arn:${this.partition}:logs:${this.region}:${this.account}:log-group:/survaas/*`,
+                },
+            },
+        }));
     }
 }
