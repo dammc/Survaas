@@ -35,7 +35,7 @@ and analyze it from a AWS SageMaker domain according to your specific research i
 1. In the AWS Management Console go to CloudFormation and open the root stack output section.
 2. Copy the `SurveyEnvironmentUrl` output value.
 
-![Overview](img/lb_screen.png)
+![Overview](img/cf_url_screen.png)
 
 3. Open the `SurveyEnvironmentUrl` in a new browser tab.
 4. If the deployment worked as intended you should see the following screen:
