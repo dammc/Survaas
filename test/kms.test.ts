@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { EncryptionStack } from '../lib/stack/kms';
+import { beforeEach, describe, expect, test } from '@jest/globals';
 
 describe('EncryptionStack', () => {
   let app: cdk.App;
@@ -40,5 +41,44 @@ describe('EncryptionStack', () => {
     template.hasResourceProperties('AWS::KMS::Alias', {
       AliasName: Match.stringLikeRegexp('alias/.*TestApp.*'),
     });
+  });
+
+  test('Survey key policy allows CloudWatch Logs to describe key and encrypt only matching log groups', () => {
+    template.hasResourceProperties('AWS::KMS::Key', {
+      KeyPolicy: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowCloudWatchLogsDescribeSurveyContainerKey',
+            Effect: 'Allow',
+            Action: 'kms:DescribeKey',
+            Principal: Match.objectLike({
+              Service: Match.anyValue(),
+            }),
+          }),
+          Match.objectLike({
+            Sid: 'AllowCloudWatchLogsForSurveyContainerLogs',
+            Effect: 'Allow',
+            Action: Match.arrayWith([
+              'kms:Encrypt',
+              'kms:Decrypt',
+              'kms:ReEncrypt*',
+              'kms:GenerateDataKey*',
+            ]),
+            Principal: Match.objectLike({
+              Service: Match.anyValue(),
+            }),
+            Condition: Match.objectLike({
+              ArnLike: Match.objectLike({
+                'kms:EncryptionContext:aws:logs:arn': Match.anyValue(),
+              }),
+            }),
+          }),
+        ]),
+      },
+    });
+
+    const serializedTemplate = JSON.stringify(template.findResources('AWS::KMS::Key'));
+    expect(serializedTemplate).toContain('log-group:/survaas/*');
+    expect(serializedTemplate).not.toContain('log-group//survaas/*');
   });
 });

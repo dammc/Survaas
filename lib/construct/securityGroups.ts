@@ -21,6 +21,11 @@ export class SecurityGroupsConstruct extends Construct {
     public readonly serviceSecurityGroup: ec2.SecurityGroup;
 
     /**
+     * Security group for the EFS file system
+     */
+    public readonly efsSecurityGroup: ec2.SecurityGroup;
+
+    /**
      * Security group for the SageMaker analytics domain
      */
     public readonly analyticsSecurityGroup: ec2.SecurityGroup;
@@ -30,8 +35,9 @@ export class SecurityGroupsConstruct extends Construct {
      * @param scope The scope in which to define this construct
      * @param id The scoped construct ID
      * @param vpc The VPC where the security groups will be created
+     * @param loadBalancerSecurityGroup Optional shared load balancer security group
      */
-    constructor(scope: Construct, id: string, vpc: ec2.Vpc) {
+    constructor(scope: Construct, id: string, vpc: ec2.Vpc, loadBalancerSecurityGroup?: ec2.SecurityGroup) {
         super(scope, id);
 
         this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DbSecurityGroup', {
@@ -39,7 +45,7 @@ export class SecurityGroupsConstruct extends Construct {
             description: 'SecurityGroup of the DB cluster',
         });
 
-        this.loadBalancerSecurityGroup = new ec2.SecurityGroup(this, 'LoadBalancerSecurityGroup', {
+        this.loadBalancerSecurityGroup = loadBalancerSecurityGroup ?? new ec2.SecurityGroup(this, 'LoadBalancerSecurityGroup', {
             vpc: vpc,
             description: 'SecurityGroup of the loadbalancer for the survey ECS cluster',
         });
@@ -47,6 +53,12 @@ export class SecurityGroupsConstruct extends Construct {
         this.serviceSecurityGroup = new ec2.SecurityGroup(this, 'ServiceSecurityGroup', {
             vpc: vpc,
             description: 'SecurityGroup of the ECS cluster',
+            allowAllOutbound: false,
+        });
+
+        this.efsSecurityGroup = new ec2.SecurityGroup(this, 'EfsSecurityGroup', {
+            vpc: vpc,
+            description: 'SecurityGroup of the EFS file system used by ECS tasks',
         });
 
         this.analyticsSecurityGroup = new ec2.SecurityGroup(this, 'AnalyticsSecurityGroup', {
@@ -70,6 +82,40 @@ export class SecurityGroupsConstruct extends Construct {
         this.serviceSecurityGroup.addIngressRule(
             ec2.Peer.securityGroupId(this.loadBalancerSecurityGroup.securityGroupId),
             ec2.Port.HTTP,
+        );
+
+        // allow ECS tasks to reach EFS mount targets over NFS
+        this.efsSecurityGroup.addIngressRule(
+            ec2.Peer.securityGroupId(this.serviceSecurityGroup.securityGroupId),
+            ec2.Port.tcp(2049),
+        );
+
+        // allow ECS tasks to connect to PostgreSQL inside the VPC
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.POSTGRES,
+        );
+
+        // allow ECS tasks to mount NFS targets inside the VPC
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(2049),
+        );
+
+        // allow ECS tasks to resolve DNS using VPC resolvers
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.udp(53),
+        );
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(53),
+        );
+
+        // allow ECS tasks to reach AWS service endpoints over HTTPS via NAT
+        this.serviceSecurityGroup.addEgressRule(
+            ec2.Peer.anyIpv4(),
+            ec2.Port.tcp(443),
         );
     }
 }   

@@ -16,5 +16,17 @@ export default tseslint.config(
         "**jest.**",
       ],
   },
+  {
+    files: ['test/**/*.ts'],
+    languageOptions: {
+      globals: {
+        beforeEach: 'readonly',
+        describe: 'readonly',
+        expect: 'readonly',
+        jest: 'readonly',
+        test: 'readonly',
+      },
+    },
+  },
 );
 

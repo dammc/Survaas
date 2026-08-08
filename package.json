@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest",
+    "test": "jest --runInBand",
     "lint:ts": "eslint \"bin/**/*.ts\" \"lib/**/*.ts\" \"test/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "precommit:policy": "bash scripts/precommit/policy-check.sh",

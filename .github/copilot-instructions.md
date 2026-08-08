@@ -6,6 +6,7 @@ Survaas is an AWS CDK v2 TypeScript repository. Keep all changes minimal, securi
 - Follow existing structure in `bin/`, `lib/construct/`, `lib/stack/`, and `test/`.
 - Keep construct IDs and resource naming stable unless migration intent is explicit.
 - Prefer repository patterns over new abstractions.
+- In stack and construct classes, declare persistent resources and configuration collections (for example cluster route definitions) as class fields and initialize them via `this.` in constructors.
 
 ## Security and Compliance Baseline
 - Treat all infrastructure edits as security-sensitive.
@@ -20,6 +21,10 @@ After relevant changes, run:
 - `npx tsc --noEmit`
 - `npx cdk synth` (only when local synth is safe/available)
 - `npx typedoc --plugin typedoc-plugin-missing-exports` (for doc-sensitive updates)
+
+Testing command policy:
+- Prefer `npm test` for repository tests (the script enforces Jest `--runInBand`).
+- Do not run `jest` directly unless `--runInBand` is explicitly included.
 
 Report pre-existing failures separately from regressions caused by your changes.
 
