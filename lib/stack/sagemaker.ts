@@ -50,6 +50,19 @@ export class SagemakerStack extends Stack {
             managedPolicies: [],
         });
 
+        this.sagemakerDomain = new sm.CfnDomain(this, 'SageMakerStudioDomain', {
+            authMode: 'SSO',
+            defaultUserSettings: {
+                executionRole: this.sagemakerDomainExecutionRole.roleArn,
+                securityGroups: props.securityGroupIds,
+            },
+            domainName: props.appName + 'SageMakerStudioDomain',
+            subnetIds: props.vpc.privateSubnets.map(sn => sn.subnetId),
+            vpcId: props.vpc.vpcId,
+            appNetworkAccessType: 'VpcOnly',
+            kmsKeyId: props.kmsKey.keyArn,
+        });
+
         this.sagemakerDomainExecutionRole.attachInlinePolicy(new iam.Policy(this, 'SagemakerCorePolicy', {
             statements: [new iam.PolicyStatement({
                 actions: [
@@ -62,8 +75,14 @@ export class SagemakerStack extends Stack {
                     'sagemaker:DeleteApp',
                     'sagemaker:DescribeApp',
                     'sagemaker:ListApps',
+                    "sagemaker:ListSpaces",
+				    "sagemaker:AddTags",
+				    "sagemaker:CreateSpace",
+				    "sagemaker:DescribeSpace",
+				    "sagemaker:DeleteSpace",
+				    "sagemaker:UpdateSpace",
                 ],
-                resources: ['*'],
+                resources: ['arn:aws:sagemaker:eu-central-1:539877446039:*/' + this.sagemakerDomain.attrDomainId + '*'],
             })],
         }));
         props.kmsKey.grant(this.sagemakerDomainExecutionRole, ...[
@@ -98,18 +117,5 @@ export class SagemakerStack extends Stack {
                 resources: [props.dbClusterSecretArn],
             })],
         }));
-
-        this.sagemakerDomain = new sm.CfnDomain(this, 'SageMakerStudioDomain', {
-            authMode: 'SSO',
-            defaultUserSettings: {
-                executionRole: this.sagemakerDomainExecutionRole.roleArn,
-                securityGroups: props.securityGroupIds,
-            },
-            domainName: props.appName + 'SageMakerStudioDomain',
-            subnetIds: props.vpc.privateSubnets.map(sn => sn.subnetId),
-            vpcId: props.vpc.vpcId,
-            appNetworkAccessType: 'VpcOnly',
-            kmsKeyId: props.kmsKey.keyArn,
-        });
     }
 }
