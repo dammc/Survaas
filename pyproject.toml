@@ -6,6 +6,7 @@ requires-python = ">=3.9"
 [dependency-groups]
 dev = [
 	"pre-commit>=4.0.0,<5.0.0",
+	"ruff>=0.16.7",
 ]
 
 [tool.uv]
