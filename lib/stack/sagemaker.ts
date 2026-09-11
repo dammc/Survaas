@@ -82,7 +82,7 @@ export class SagemakerStack extends Stack {
 				    "sagemaker:DeleteSpace",
 				    "sagemaker:UpdateSpace",
                 ],
-                resources: ['arn:aws:sagemaker:eu-central-1:539877446039:*/' + this.sagemakerDomain.attrDomainId + '*'],
+                resources: ['arn:aws:sagemaker:' + this.region + ':' + this.account + ':*/' + this.sagemakerDomain.attrDomainId + '*'],
             })],
         }));
         props.kmsKey.grant(this.sagemakerDomainExecutionRole, ...[
