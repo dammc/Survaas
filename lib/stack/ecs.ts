@@ -235,6 +235,10 @@ export class SurveyEcsStack extends Stack {
             protocol: elbv2.ApplicationProtocol.HTTP,
             port: 80,
             targets: [this.surveyLoadBalancedService],
+            healthCheck: {
+                path: '/healthz',
+                healthyHttpCodes: '200',
+            },
         });
 
         this.surveyListenerRule = new elbv2.ApplicationListenerRule(this.nestedServiceStack, 'SurveyListenerRule', {
