@@ -64,7 +64,7 @@ export class RdsStack extends Stack {
           publiclyAccessible: false,
         }),
       ],
-      serverlessV2MinCapacity: 0.5,
+      serverlessV2MinCapacity: 0,
       serverlessV2MaxCapacity: 2,
       storageEncrypted: true,
       storageEncryptionKey: props.kmsKey,

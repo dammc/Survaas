@@ -794,6 +794,7 @@ COPY survey_template/layout_survey_list.twig /var/www/html/themes/survey/fruity_
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN ln -s usr/local/bin/docker-entrypoint.sh /entrypoint.sh # backwards compat
+RUN printf 'ok\n' > /var/www/html/healthz # add custom path for LB healthchecks
 
 # ENTRYPOINT resets CMD
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
